@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书数据爬取系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-left: 4px solid #ff6b6b;
+            padding-left: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ee5a6f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .keywords-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .keyword-tag {
+            background: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .keyword-tag span {
+            color: #333;
+        }
+
+        .status-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b 0%, #ee5a6f 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .users-table th {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .users-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .user-link {
+            color: #ff6b6b;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .user-link:hover {
+            color: #ee5a6f;
+            text-decoration: underline;
+        }
+
+        .user-link:visited {
+            color: #ff6b6b;
+        }
+
+        .comment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .comment-modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .comment-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .comment-modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .close-btn:hover {
+            background: #ee5a6f;
+        }
+
+        .comment-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .comment-content {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .comment-meta {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            gap: 15px;
+        }
+
+        .view-comments-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .view-comments-btn:hover {
+            background: #5a6268;
+        }
+
+        .users-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 小红书数据爬取系统</h1>
+            <p>配置关键词，自动爬取用户信息</p>
+        </div>
+
+        <div class="content">
+            <!-- 关键词配置区域 -->
+            <div class="section">
+                <h2>关键词配置</h2>
+                <div class="input-group">
+                    <input type="text" id="keywordInput" placeholder="输入关键词，例如：美食、旅行、穿搭...">
+                    <button class="btn btn-primary" onclick="addKeyword()">添加关键词</button>
+                </div>
+                <div class="keywords-list" id="keywordsList"></div>
+            </div>
+
+            <!-- 爬取配置区域 -->
+            <div class="section">
+                <h2>爬取配置</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: #666; font-size: 14px;">最多抓取帖子数</label>
+                        <input type="number" id="maxNotes" value="100" min="1" max="500" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: #666; font-size: 14px;">每个帖子最多评论数</label>
+                        <input type="number" id="maxComments" value="100" min="1" max="500" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; color: #666; font-size: 14px;">评论过滤关键词（多个关键词用逗号分隔，留空不过滤）</label>
+                    <div class="input-group">
+                        <input type="text" id="commentFilterKeywords" placeholder="例如：便宜,优惠,打折">
+                    </div>
+                    <div style="margin-top: 10px; font-size: 12px; color: #999;">
+                        提示：只有包含这些关键词的评论才会被采集
+                    </div>
+                </div>
+            </div>
+
+            <!-- 爬取控制区域 -->
+            <div class="section">
+                <h2>爬取控制</h2>
+                <div class="status-panel">
+                    <div class="status-item">
+                        <span class="status-label">运行状态</span>
+                        <span class="status-value" id="runningStatus">未运行</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">当前关键词</span>
+                        <span class="status-value" id="currentKeyword">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">已获取用户数</span>
+                        <span class="status-value" id="totalUsers">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">状态信息</span>
+                        <span class="status-value" id="statusMessage">等待开始</span>
+                    </div>
+                    <div class="progress-bar" id="progressBar" style="display: none;">
+                        <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="startBtn" onclick="startCrawl()">开始爬取</button>
+            </div>
+
+            <!-- 用户数据展示区域 -->
+            <div class="section">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <h2 style="margin: 0;">用户数据 (<span id="userCount">0</span>)</h2>
+                    <button type="button" class="btn btn-primary" id="exportExcelBtn" onclick="exportExcel()">导出 Excel</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>头像</th>
+                                <th>用户ID</th>
+                                <th>昵称</th>
+                                <th>评论数</th>
+                                <th>来源关键词</th>
+                                <th>爬取时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-state">暂无数据</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 评论弹窗 -->
+    <div id="commentModal" class="comment-modal">
+        <div class="comment-modal-content" id="commentModalContent">
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // 导出用户数据为 Excel
+        async function exportExcel() {
+            try {
+                const res = await fetch(`${API_BASE}/users/export/excel`);
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    alert(data.error || '导出失败');
+                    return;
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                var cd = res.headers.get('Content-Disposition');
+var match = cd && cd.match(/filename\*?=(?:UTF-8'')?([^;\n]+)/);
+a.download = (match ? decodeURIComponent(match[1].trim()) : null) || ('用户数据_' + new Date().toISOString().slice(0,19).replace(/-/g,'').replace('T','_').replace(/:/g,'') + '.xlsx');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error('exportExcel:', e);
+                alert('导出失败');
+            }
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            loadKeywords();
+            loadUsers();
+            loadStatus();
+            // 每3秒更新一次状态
+            setInterval(loadStatus, 3000);
+            setInterval(loadUsers, 5000);
+        };
+
+        // 加载关键词列表
+        async function loadKeywords() {
+            try {
+                const response = await fetch(`${API_BASE}/keywords`);
+                const keywords = await response.json();
+                renderKeywords(keywords);
+            } catch (error) {
+                console.error('加载关键词失败:', error);
+            }
+        }
+
+        // 渲染关键词列表
+        function renderKeywords(keywords) {
+            const container = document.getElementById('keywordsList');
+            if (keywords.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无关键词，请添加</div>';
+                return;
+            }
+            container.innerHTML = keywords.map(keyword => `
+                <div class="keyword-tag">
+                    <span>${keyword}</span>
+                    <button class="btn btn-danger" onclick="deleteKeyword('${keyword}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // 添加关键词
+        async function addKeyword() {
+            const input = document.getElementById('keywordInput');
+            const keyword = input.value.trim();
+            
+            if (!keyword) {
+                alert('请输入关键词');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/keywords`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ keyword })
+                });
+
+                if (response.ok) {
+                    input.value = '';
+                    loadKeywords();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || '添加失败');
+                }
+            } catch (error) {
+                console.error('添加关键词失败:', error);
+                alert('添加关键词失败');
+            }
+        }
+
+        // 删除关键词
+        async function deleteKeyword(keyword) {
+            if (!confirm(`确定要删除关键词 "${keyword}" 吗？`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/keywords/${encodeURIComponent(keyword)}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadKeywords();
+                }
+            } catch (error) {
+                console.error('删除关键词失败:', error);
+            }
+        }
+
+        // 开始爬取
+        async function startCrawl() {
+            try {
+                const response = await fetch(`${API_BASE}/keywords`);
+                const keywords = await response.json();
+
+                if (keywords.length === 0) {
+                    alert('请先添加关键词');
+                    return;
+                }
+
+                // 获取配置参数
+                const maxNotes = parseInt(document.getElementById('maxNotes').value) || 100;
+                const maxComments = parseInt(document.getElementById('maxComments').value) || 100;
+                const filterKeywordsText = document.getElementById('commentFilterKeywords').value.trim();
+                const commentFilterKeywords = filterKeywordsText ? 
+                    filterKeywordsText.split(',').map(k => k.trim()).filter(k => k) : [];
+
+                const configText = `配置信息：
+- 关键词数量: ${keywords.length}
+- 最多抓取帖子数: ${maxNotes}
+- 每个帖子最多评论数: ${maxComments}
+- 评论过滤关键词: ${commentFilterKeywords.length > 0 ? commentFilterKeywords.join(', ') : '无'}
+
+确定要开始爬取吗？`;
+
+                if (!confirm(configText)) {
+                    return;
+                }
+
+                const crawlResponse = await fetch(`${API_BASE}/crawl`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        keywords,
+                        max_notes: maxNotes,
+                        max_comments: maxComments,
+                        comment_filter_keywords: commentFilterKeywords
+                    })
+                });
+
+                if (crawlResponse.ok) {
+                    alert('爬虫已启动，请查看状态面板');
+                    loadStatus();
+                } else {
+                    const data = await crawlResponse.json();
+                    alert(data.error || '启动失败');
+                }
+            } catch (error) {
+                console.error('启动爬虫失败:', error);
+                alert('启动爬虫失败');
+            }
+        }
+
+        // 加载状态
+        async function loadStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const status = await response.json();
+
+                document.getElementById('runningStatus').textContent = 
+                    status.running ? '<span class="loading"></span> 运行中' : '未运行';
+                document.getElementById('currentKeyword').textContent = 
+                    status.current_keyword || '-';
+                document.getElementById('totalUsers').textContent = status.total_users || 0;
+                document.getElementById('statusMessage').textContent = status.message || '等待开始';
+
+                const progressBar = document.getElementById('progressBar');
+                const progressFill = document.getElementById('progressFill');
+                const startBtn = document.getElementById('startBtn');
+
+                if (status.running) {
+                    progressBar.style.display = 'block';
+                    progressFill.style.width = `${status.progress || 0}%`;
+                    progressFill.textContent = `${status.progress || 0}%`;
+                    startBtn.disabled = true;
+                    startBtn.textContent = '爬取中...';
+                } else {
+                    progressBar.style.display = 'none';
+                    startBtn.disabled = false;
+                    startBtn.textContent = '开始爬取';
+                }
+            } catch (error) {
+                console.error('加载状态失败:', error);
+            }
+        }
+
+        // 加载用户数据
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/users`);
+                const users = await response.json();
+
+                document.getElementById('userCount').textContent = users.length;
+                renderUsers(users);
+            } catch (error) {
+                console.error('加载用户数据失败:', error);
+            }
+        }
+
+        // 渲染用户表格
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无数据</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => {
+                const userUrl = user.user_url || (user.user_id ? `https://www.xiaohongshu.com/user/profile/${user.user_id}?xsec_source=pc_note` : '#');
+                const userId = user.user_id || '-';
+                const nickname = user.nickname || '-';
+                const comments = user.comments || [];
+                const commentCount = comments.length;
+                
+                return `
+                <tr>
+                    <td>
+                        ${user.avatar ? 
+                            `<img src="${user.avatar}" alt="头像" class="avatar" onerror="this.style.display='none'">` : 
+                            '<span style="color: #999;">-</span>'
+                        }
+                    </td>
+                    <td>
+                        ${userId !== '-' && userUrl !== '#' ? 
+                            `<a href="${userUrl}" class="user-link" target="_blank" rel="noopener noreferrer">${userId}</a>` : 
+                            userId
+                        }
+                    </td>
+                    <td>
+                        ${nickname !== '-' && userUrl !== '#' ? 
+                            `<a href="${userUrl}" class="user-link" target="_blank" rel="noopener noreferrer">${nickname}</a>` : 
+                            nickname
+                        }
+                    </td>
+                    <td>${commentCount}</td>
+                    <td>${user.keyword || user.source_keyword || '-'}</td>
+                    <td>${user.crawl_time ? new Date(user.crawl_time).toLocaleString('zh-CN') : '-'}</td>
+                    <td>
+                        ${commentCount > 0 ? 
+                            `<button class="view-comments-btn" onclick="showComments('${userId}')">查看评论</button>` : 
+                            '-'
+                        }
+                    </td>
+                </tr>
+            `;
+            }).join('');
+        }
+
+        // 显示评论
+        function showComments(userId) {
+            // 从用户数据中查找评论
+            fetch(`${API_BASE}/users`)
+                .then(response => response.json())
+                .then(users => {
+                    const user = users.find(u => u.user_id === userId);
+                    if (!user || !user.comments || user.comments.length === 0) {
+                        alert('该用户暂无评论数据');
+                        return;
+                    }
+
+                    const modal = document.getElementById('commentModal');
+                    const modalContent = document.getElementById('commentModalContent');
+                    
+                    modalContent.innerHTML = `
+                        <div class="comment-modal-header">
+                            <h3>${user.nickname || user.user_id} 的评论 (${user.comments.length}条)</h3>
+                            <button class="close-btn" onclick="closeCommentModal()">关闭</button>
+                        </div>
+                        <div>
+                            ${user.comments.map(comment => {
+                                const base = comment.note_id ? ('https://www.xiaohongshu.com/explore/' + comment.note_id) : '';
+                                const token = comment.note_xsec_token || '';
+                                const source = comment.note_xsec_source || '';
+                                const noteUrl = base ? (token ? base + '?xsec_token=' + encodeURIComponent(token) + '&xsec_source=' + encodeURIComponent(source) : base) : '';
+                                const noteTitle = comment.note_title || comment.note_id || '未知';
+                                return `
+                                <div class="comment-item">
+                                    <div class="comment-content">${escapeHtml(comment.content || '')}</div>
+                                    <div class="comment-meta">
+                                        <span><strong>评论时间:</strong> ${comment.comment_time_str || (comment.comment_time ? formatCommentTime(comment.comment_time) : '-')}</span>
+                                        <span>笔记: ${noteUrl ? `<a href="${noteUrl}" class="user-link" target="_blank" rel="noopener noreferrer">${escapeHtml(noteTitle)}</a>` : noteTitle}</span>
+                                        <span>关键词: ${comment.keyword || '-'}</span>
+                                        <span>抓取时间: ${comment.crawl_time ? new Date(comment.crawl_time).toLocaleString('zh-CN') : '-'}</span>
+                                        ${noteUrl ? `<span><a href="${noteUrl}" class="btn view-comments-btn" style="margin-left:8px" target="_blank" rel="noopener noreferrer">查看原帖</a></span>` : ''}
+                                    </div>
+                                </div>
+                            `}).join('')}
+                        </div>
+                    `;
+                    
+                    modal.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('加载评论失败:', error);
+                    alert('加载评论失败');
+                });
+        }
+
+        // 关闭评论弹窗
+        function closeCommentModal() {
+            document.getElementById('commentModal').style.display = 'none';
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 评论时间戳转可读时间（支持秒或毫秒）
+        function formatCommentTime(ts) {
+            if (!ts) return '-';
+            const ms = ts < 1e12 ? ts * 1000 : ts;
+            return new Date(ms).toLocaleString('zh-CN');
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('commentModal');
+            if (event.target === modal) {
+                closeCommentModal();
+            }
+        }
+
+        // 回车添加关键词
+        document.getElementById('keywordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addKeyword();
+            }
+        });
+    </script>
+</body>
+</html>
