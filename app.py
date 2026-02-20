@@ -4,6 +4,7 @@ import os
 import json
 import threading
 import queue as thread_queue
+import time
 from datetime import datetime
 # 使用 MediaCrawler 爬虫
 try:
@@ -185,20 +186,22 @@ def export_users_excel():
     # 工作表1：用户列表
     ws1 = wb.active
     ws1.title = "用户列表"
-    headers1 = ["用户ID", "昵称", "主页链接", "来源关键词", "爬取时间", "评论数"]
+    headers1 = ["用户ID", "昵称", "主页简介", "主页链接", "来源关键词", "爬取时间", "评论数"]
     for col, h in enumerate(headers1, 1):
         ws1.cell(row=1, column=col, value=h)
         ws1.cell(row=1, column=col).font = Font(bold=True)
     for row, u in enumerate(users, 2):
         ws1.cell(row=row, column=1, value=u.get("user_id", ""))
         ws1.cell(row=row, column=2, value=u.get("nickname", ""))
-        ws1.cell(row=row, column=3, value=u.get("user_url", ""))
-        ws1.cell(row=row, column=4, value=u.get("keyword", ""))
-        ws1.cell(row=row, column=5, value=u.get("crawl_time", ""))
+        ws1.cell(row=row, column=3, value=u.get("desc", "") or u.get("user_desc", ""))
+        ws1.cell(row=row, column=4, value=u.get("user_url", ""))
+        ws1.cell(row=row, column=5, value=u.get("keyword", ""))
+        ws1.cell(row=row, column=6, value=u.get("crawl_time", ""))
         comments = u.get("comments") or []
-        ws1.cell(row=row, column=6, value=len(comments))
-    for col in range(1, 7):
+        ws1.cell(row=row, column=7, value=len(comments))
+    for col in range(1, 8):
         ws1.column_dimensions[get_column_letter(col)].width = 18
+    ws1.column_dimensions['C'].width = 40  # 主页简介列加宽
 
     # 工作表2：评论明细
     ws2 = wb.create_sheet("评论明细", 1)
@@ -388,6 +391,17 @@ def run_crawler(keywords, max_notes=100, max_comments=100, comment_filter_keywor
                         if xsec_token:
                             qs = f"xsec_token={xsec_token}&{qs}"
                         existing_user['user_url'] = f"https://www.xiaohongshu.com/user/profile/{user_id}?{qs}"
+                        
+                        # 若尚未有主页简介，则请求用户主页抓取简介
+                        if not (existing_user.get('desc') or existing_user.get('user_desc')):
+                            try:
+                                creator_info = crawler.get_creator_info(user_id, xsec_token, xsec_source)
+                                desc = XHSCrawler.get_creator_desc(creator_info)
+                                if desc:
+                                    existing_user['desc'] = desc
+                                time.sleep(1)  # 避免请求过快
+                            except Exception as e:
+                                print(f"[爬虫] 获取用户简介失败 user_id={user_id}: {e}")
                         
                         with open(user_file, 'w', encoding='utf-8') as f:
                             json.dump(existing_user, f, ensure_ascii=False, indent=2)

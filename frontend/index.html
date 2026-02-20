@@ -226,6 +226,13 @@
             background: #f8f9fa;
         }
 
+        .users-table .desc-cell {
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .user-link {
             color: #ff6b6b;
             text-decoration: none;
@@ -441,6 +448,7 @@
                                 <th>头像</th>
                                 <th>用户ID</th>
                                 <th>昵称</th>
+                                <th>主页简介</th>
                                 <th>评论数</th>
                                 <th>来源关键词</th>
                                 <th>爬取时间</th>
@@ -687,7 +695,7 @@ a.download = (match ? decodeURIComponent(match[1].trim()) : null) || ('用户数
             const tbody = document.getElementById('usersTableBody');
             
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无数据</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">暂无数据</td></tr>';
                 return;
             }
 
@@ -695,6 +703,7 @@ a.download = (match ? decodeURIComponent(match[1].trim()) : null) || ('用户数
                 const userUrl = user.user_url || (user.user_id ? `https://www.xiaohongshu.com/user/profile/${user.user_id}?xsec_source=pc_note` : '#');
                 const userId = user.user_id || '-';
                 const nickname = user.nickname || '-';
+                const desc = user.desc || user.user_desc || '';
                 const comments = user.comments || [];
                 const commentCount = comments.length;
                 
@@ -718,6 +727,7 @@ a.download = (match ? decodeURIComponent(match[1].trim()) : null) || ('用户数
                             nickname
                         }
                     </td>
+                    <td class="desc-cell" title="${escapeHtml(desc)}">${desc ? escapeHtml(desc) : '<span style="color: #999;">-</span>'}</td>
                     <td>${commentCount}</td>
                     <td>${user.keyword || user.source_keyword || '-'}</td>
                     <td>${user.crawl_time ? new Date(user.crawl_time).toLocaleString('zh-CN') : '-'}</td>

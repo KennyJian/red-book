@@ -352,7 +352,45 @@ class XHSCrawlerAdapter:
                 filter_keywords=filter_keywords
             )
         )
-    
+
+    async def _get_creator_info_async(
+        self, user_id: str, xsec_token: str = "", xsec_source: str = "pc_note"
+    ) -> Optional[Dict]:
+        """异步获取用户主页信息（含简介）"""
+        if self._xhs_client is None:
+            await self._init_browser_async()
+        try:
+            return await self._xhs_client.get_creator_info(
+                user_id=user_id,
+                xsec_token=xsec_token or "",
+                xsec_source=xsec_source or "pc_note",
+            )
+        except Exception as e:
+            utils.logger.warning(f"获取用户主页信息失败 user_id={user_id}: {e}")
+            return None
+
+    def get_creator_info(
+        self, user_id: str, xsec_token: str = "", xsec_source: str = "pc_note"
+    ) -> Optional[Dict]:
+        """同步获取用户主页信息（含简介）"""
+        return self._run_async(
+            self._get_creator_info_async(user_id, xsec_token, xsec_source)
+        )
+
+    @staticmethod
+    def get_creator_desc(creator_info: Optional[Dict]) -> str:
+        """从 get_creator_info 返回的字典中解析主页简介"""
+        if not creator_info:
+            return ""
+        # 小红书用户页 userPageData 可能含 basicInfo.desc / userInfo.desc 或直接 desc
+        desc = (
+            (creator_info.get("basicInfo") or {}).get("desc")
+            or (creator_info.get("userInfo") or {}).get("desc")
+            or creator_info.get("desc")
+            or ""
+        )
+        return (desc or "").strip()
+
     def close(self):
         """关闭浏览器"""
         if self._browser_context:
